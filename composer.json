@@ -2,6 +2,7 @@
   "name": "hiicup/layui-form",
   "description": "laravel layui form html builder",
   "type": "library",
+  "version": "0.1",
   "minimum-stability": "stable",
   "license": "MIT",
   "authors": [
