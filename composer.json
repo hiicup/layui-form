@@ -1,0 +1,23 @@
+{
+  "name": "hiicup/layui-form",
+  "description": "laravel layui form html builder",
+  "type": "library",
+  "minimum-stability": "stable",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Hiicup",
+      "email": "hiicup@qq.com"
+    }
+  ],
+  "require": {
+    "php": ">=5.6.0",
+    "laravel/framework": "~5.4",
+    "laravelcollective/html": "^5.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "Hiicup\\Layui\\Html\\": "src/"
+    }
+  }
+}
