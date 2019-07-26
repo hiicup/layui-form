@@ -10,12 +10,12 @@ use Ramsey\Uuid\Uuid;
 class LayuiHtmlBuilder {
 
     public function css() {
-        return '<link rel="stylesheet" href="'.asset('layui/css/layui.css').'">'.
-            '<link rel="stylesheet" href="'.asset('layui-form.css').'">';
+        return '<link rel="stylesheet" href="' . asset('layui-form/layui/css/layui.css') . '">' .
+            '<link rel="stylesheet" href="' . asset('layui-form/layui-form.css') . '">';
     }
 
     public function js() {
-        return '<script src="'.asset('layui/layui.all.js').'"></script>';
+        return '<script src="' . asset('layui-form/layui/layui.all.js') . '"></script>';
     }
 
     /**
@@ -44,7 +44,7 @@ class LayuiHtmlBuilder {
         ]);
     }
 
-    public function selectSearchText($name, Collection $list, $label = '', $selected = null, $required = false, $tips = '直接选择或搜索选择') {
+    public function selectSearchText($name, $list, $label = '', $selected = null, $required = false, $tips = '直接选择或搜索选择') {
         $options = [
             'lay-search' => '',
         ];
@@ -55,7 +55,7 @@ class LayuiHtmlBuilder {
 
         $newList = [];
 
-        foreach ($list as $item){
+        foreach ($list as $item) {
             $newList[$item] = $item;
         }
         $list = collect($newList);
@@ -141,7 +141,7 @@ class LayuiHtmlBuilder {
             'class'       => 'upload-single-attachment',
             'isHtml'      => true,
             'name'        => $name,
-            'id'          => Uuid::uuid4(),
+            'id'          => uniqid(),
             'value'       => $value,
             'tips'        => $tips,
             'placeholder' => $placeholder,
@@ -164,7 +164,7 @@ class LayuiHtmlBuilder {
             'class'  => 'upload-single-attachment',
             'isHtml' => false,
             'name'   => $name,
-            'id'     => Uuid::uuid4(),
+            'id'     => uniqid(),
             'value'  => $value,
         ];
 
@@ -188,8 +188,8 @@ class LayuiHtmlBuilder {
         if ($model) {
             $value = old($name, $model->$name);
 
-            if($value){
-                $value = explode(",",$value);
+            if ($value) {
+                $value = explode(",", $value);
             }
         }
 
@@ -197,7 +197,7 @@ class LayuiHtmlBuilder {
             'class'       => 'upload-mutil-img',
             'isHtml'      => true,
             'name'        => $name,
-            'id'          => Uuid::uuid4(),
+            'id'          => uniqid(),
             'value'       => $value,
             'tips'        => $tips,
             'placeholder' => $placeholder,
@@ -217,14 +217,14 @@ class LayuiHtmlBuilder {
             'class'  => 'upload-mutil-img',
             'isHtml' => false,
             'name'   => $name,
-            'id'     => Uuid::uuid4(),
+            'id'     => uniqid(),
             'value'  => $value,
         ];
 
         return view('layui::upload-imgs')->with($render);
     }
 
-    public function uploadSingleImg($name, $model = null, $tips = null, $placeholder = '点击上传，或将文件拖拽到此处') {
+    public function uploadOneImg($name, $model = null, $tips = null, $placeholder = '点击上传，或将文件拖拽到此处') {
 
         $value = old($name);
         if ($model) {
@@ -233,9 +233,9 @@ class LayuiHtmlBuilder {
 
         $render = [
             'class'       => 'upload-single-img',
-            'isHtml'      => true,
+            'js'          => false,
             'name'        => $name,
-            'id'          => Uuid::uuid4(),
+            'id'          => uniqid(),
             'value'       => $value,
             'tips'        => $tips,
             'placeholder' => $placeholder,
@@ -244,7 +244,7 @@ class LayuiHtmlBuilder {
         return view('layui::upload-single-img')->with($render);
     }
 
-    public function uploadSingleImgDepends($name, $model = null) {
+    public function uploadOneImgJS($name, $model = null) {
 
         $value = old($name);
         if ($model) {
@@ -252,34 +252,17 @@ class LayuiHtmlBuilder {
         }
 
         $render = [
-            'class'  => 'upload-single-img',
-            'isHtml' => false,
-            'name'   => $name,
-            'id'     => Uuid::uuid4(),
-            'value'  => $value,
+            'class' => 'upload-single-img',
+            'js'    => true,
+            'name'  => $name,
+            'id'    => uniqid(),
+            'value' => $value,
         ];
 
         return view('layui::upload-single-img')->with($render);
     }
 
-    public function textareaDepends() {
-        return view('layui::textarea-depends');
-    }
-
-    public function bigTextarea($name, $label, $model = null, $required = false) {
-        return $this->textarea($name, $label, $model, $required, 400);
-    }
-
-    public function miniTextarea($name, $label, $model = null, $required = false) {
-        return $this->textarea($name, $label, $model, $required, 200);
-    }
-
-    public function smallTextarea($name, $label, $model = null, $required = false) {
-        return $this->textarea($name, $label, $model, $required, 300);
-    }
-
-
-    public function nromalTextarea($name, $label, $model = null, $required = false, $height = 100, $placeholder = null) {
+    public function textarea($name, $label, $model = null, $required = false, $size = [600, 120], $placeholder = null) {
         $value = old($name);
         if ($model) {
             $value = old($name, $model->$name);
@@ -289,10 +272,13 @@ class LayuiHtmlBuilder {
             $placeholder = "请输入" . $label;
         }
 
+        $width = $size[0];
+        $height = $size[1];
+
         $options = [
             'class'       => 'layui-textarea',
             'placeholder' => $placeholder,
-            'style'       => "min-height: {$height}px;",
+            'style'       => "height: {$height}px;width:{$width}px",
             'rows'        => '',
         ];
 
@@ -311,7 +297,13 @@ class LayuiHtmlBuilder {
         ]);
     }
 
-    public function textarea($name, $label, $model = null, $required = false, $height = 350) {
+    public function ueditorJS() {
+        return view('layui::ueditor', [
+            "js" => true,
+        ]);
+    }
+
+    public function ueditor($name, $label, $model = null, $required = false, $height = 350) {
         $value = old($name);
         if ($model) {
             $value = old($name, $model->$name);
@@ -322,8 +314,8 @@ class LayuiHtmlBuilder {
         $options = [
             'class'       => 'ueditor',
             'placeholder' => $placeholder,
-            'style'       => "height: {$height}px;",
-            'id'          => Uuid::uuid4(),
+            'style'       => "height: {$height}px;width:99%",
+            'id'          => uniqid(),
             'data-height' => $height,
         ];
 
@@ -333,7 +325,8 @@ class LayuiHtmlBuilder {
             $options['lay-verify'] = 'content';
         }
 
-        return view('layui::textarea', [
+        return view('layui::ueditor', [
+            "js"       => false,
             'name'     => $name,
             'required' => $required,
             'label'    => $label,
@@ -504,10 +497,10 @@ EOL;
     }
 
     public function inputNumber($name, $label, $model = null, $required = false, $inputSize = 'input-xxx') {
-        return $this->input($name,$label,$model,$required,$inputSize,'number');
+        return $this->input($name, $label, $model, $required, $inputSize, 'number');
     }
 
-    public function input($name, $label, $model = null, $required = false, $inputSize = 'input-xxx',$type='text') {
+    public function input($name, $label, $model = null, $required = false, $inputSize = 'input-xxx', $type = 'text') {
         $value = old($name);
         if ($model) {
             $value = old($name, $model->$name);
@@ -531,7 +524,7 @@ EOL;
         }
 
         return view('layui::input', [
-            'type'=>$type,
+            'type'      => $type,
             'name'      => $name,
             'required'  => $required,
             'label'     => $label,
@@ -541,7 +534,7 @@ EOL;
         ]);
     }
 
-    public function dialogInfo($url, $title, $label='更多',$w = 500, $h = 400) {
+    public function dialogInfo($url, $title, $label = '更多', $w = 500, $h = 400) {
         return <<<HTML
 <a href="javascript:;" class="blue fn-info" data-url="{$url}" data-title="{$title}" data-w="{$w}" data-h="{$h}">{$label}</a>
 HTML;

@@ -35,12 +35,9 @@ class LayuiHtmlBuilderServiceProvider extends ServiceProvider {
         $this->loadViewsFrom(dirname(__DIR__).DIRECTORY_SEPARATOR."resources/views","layui");
 
         $this->publishes([
-            dirname(__DIR__).DIRECTORY_SEPARATOR."resources".DIRECTORY_SEPARATOR."assets".DIRECTORY_SEPARATOR."layui" =>public_path("layui"),
-            dirname(__DIR__).DIRECTORY_SEPARATOR."resources".DIRECTORY_SEPARATOR."assets".DIRECTORY_SEPARATOR."layui-form.css" =>public_path("layui-form.css"),
+            dirname(__DIR__).DIRECTORY_SEPARATOR."resources".DIRECTORY_SEPARATOR."assets".DIRECTORY_SEPARATOR."layui-form" =>public_path("layui-form"),
         ]);
 
     }
-
-
 
 }
