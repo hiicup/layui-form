@@ -2,7 +2,7 @@
     <label class="layui-form-label">{{ $title }}</label>
     <div class="layui-input-block">
         <div class=" input-x">
-            {!! $layui->uploadSingleImg($name,$model,$tips,$placeholder) !!}
+            {!! $layui->uploadImgInline($name,$tips,$placeholder) !!}
         </div>
     </div>
 </div>

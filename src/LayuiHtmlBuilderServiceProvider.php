@@ -36,6 +36,7 @@ class LayuiHtmlBuilderServiceProvider extends ServiceProvider {
 
         $this->publishes([
             dirname(__DIR__).DIRECTORY_SEPARATOR."resources".DIRECTORY_SEPARATOR."assets".DIRECTORY_SEPARATOR."layui-form" =>public_path("layui-form"),
+            dirname(__DIR__).DIRECTORY_SEPARATOR."resources".DIRECTORY_SEPARATOR."config".DIRECTORY_SEPARATOR."layui.php" =>config_path("layui.php"),
         ]);
 
     }

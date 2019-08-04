@@ -1,0 +1,1 @@
+{!! $form->input($type,$name,$value,$options) !!}

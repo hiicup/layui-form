@@ -4,10 +4,17 @@
 namespace Hiicup\Layui\Html;
 
 
-use Illuminate\Support\Collection;
-use Ramsey\Uuid\Uuid;
+use Illuminate\Database\Eloquent\Model;
 
 class LayuiHtmlBuilder {
+
+    private $jsSet = [];
+    /**
+     * @var \Illuminate\Database\Eloquent\Model 数据
+     */
+    private $model = null;
+    private $label;
+    private $name;
 
     public function css() {
         return '<link rel="stylesheet" href="' . asset('layui-form/layui/css/layui.css') . '">' .
@@ -15,7 +22,21 @@ class LayuiHtmlBuilder {
     }
 
     public function js() {
-        return '<script src="' . asset('layui-form/layui/layui.all.js') . '"></script>';
+        $script = '<script src="' . asset('layui-form/layui/layui.all.js') . '"></script>' . PHP_EOL;
+        foreach ($this->jsSet as $js) {
+            $script .= $js;
+        }
+
+        return $script;
+    }
+
+    /**
+     * @param null $model
+     * @return null
+     */
+    public function model($model = null) {
+        $this->model = $model;
+        return null;
     }
 
     /**
@@ -44,56 +65,56 @@ class LayuiHtmlBuilder {
         ]);
     }
 
-    public function selectSearchText($name, $list, $label = '', $selected = null, $required = false, $tips = '直接选择或搜索选择') {
-        $options = [
-            'lay-search' => '',
-        ];
+    public function selectXXL($name, $list, $label = '', $selected = null, $required = false) {
+        return $this->select($name, $list, $label, $selected, $required, 280);
+    }
+
+    public function selectXL($name, $list, $label = '', $selected = null, $required = false) {
+        return $this->select($name, $list, $label, $selected, $required, 220);
+    }
+
+    public function select($name, $list, $label = '', $selected = null, $required = false, $width = 190) {
+        $options = [];
 
         if ($required) {
             $options['lay-verify'] = "required";
         }
 
-        $newList = [];
+        $style = "width:{$width}px;";
 
-        foreach ($list as $item) {
-            $newList[$item] = $item;
+        if ($this->model && is_null($selected)) {
+            $selected = $this->model->$name;
         }
-        $list = collect($newList);
-        $list = $list->prepend('', $tips);
 
-        return view('layui::select-search')->with([
+        if (is_string($list)) {
+            // 如果是逗号分割的字符串
+            $list = explode(",", $list);
+            $list = array_filter($list, function ($it) {
+                return !!$it;
+            });
+            foreach ($list as $item) {
+                $newList[$item] = $item;
+            }
+        }
+
+        if (!is_object($list)) {
+            $list = collect($list);
+        }
+
+        $list->prepend('', "");
+
+        return view('layui::select')->with([
             'list'     => $list,
             'name'     => $name,
             'options'  => $options,
             'selected' => $selected,
             'label'    => $label,
             'required' => $required,
+            'style'    => $style,
         ]);
     }
 
-    public function selectSearch($name, Collection $list, $label = '', $selected = null, $required = false, $tips = '直接选择或搜索选择') {
-        $options = [
-            'lay-search' => '',
-        ];
-
-        if ($required) {
-            $options['lay-verify'] = "required";
-        }
-
-        $list = $list->prepend('', $tips);
-
-        return view('layui::select-search')->with([
-            'list'     => $list,
-            'name'     => $name,
-            'options'  => $options,
-            'selected' => $selected,
-            'label'    => $label,
-            'required' => $required,
-        ]);
-    }
-
-
-    public function label($label, $required = false) {
+    public function labelTag($label, $required = false) {
 
         return view('layui::label', [
             'label'    => $label,
@@ -101,7 +122,8 @@ class LayuiHtmlBuilder {
         ]);
     }
 
-    public function uploadFile($title, $name, $model = null, $tips = null, $placeholder = '点击上传，或将文件拖拽到此处') {
+    public function uploadFile($title, $name, $tips = null, $placeholder = '点击上传，或将文件拖拽到此处') {
+        $model = $this->model;
         return view('layui::upload-file', [
             'title'       => $title,
             'name'        => $name,
@@ -113,14 +135,13 @@ class LayuiHtmlBuilder {
 
     /**
      * @param        $name
-     * @param null   $model
      * @param null   $tips
      * @param string $placeholder
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      * @throws \Exception
      */
-    public function uploadSingleAttachment($name, $model = null, $tips = null, $placeholder = '点击上传，或将文件拖拽到此处') {
-
+    public function uploadFileInline($name, $tips = null, $placeholder = '点击上传，或将文件拖拽到此处') {
+        $model = $this->model;
         $value = old($name);
         $attach_name = '';
         $attach_url = '';
@@ -153,8 +174,9 @@ class LayuiHtmlBuilder {
         return view('layui::upload-single-attachment')->with($render);
     }
 
-    public function uploadSingleAttachmentDepends($name, $model = null) {
+    public function uploadSingleAttachmentDepends($name) {
 
+        $model = $this->model;
         $value = old($name);
         if ($model) {
             $value = old($name, $model->$name);
@@ -171,19 +193,8 @@ class LayuiHtmlBuilder {
         return view('layui::upload-single-attachment')->with($render);
     }
 
-
-    public function uploadImg($title, $name, $model = null, $tips = null, $placeholder = '点击上传，或将文件拖拽到此处') {
-        return view('layui::upload-img', [
-            'title'       => $title,
-            'name'        => $name,
-            'model'       => $model,
-            'tips'        => $tips,
-            'placeholder' => $placeholder,
-        ]);
-    }
-
-    public function uploadImgs($name, $model = null, $tips = null, $placeholder = '点击上传，或将文件拖拽到此处') {
-
+    public function uploadImgs($name, $tips = null, $placeholder = '点击上传，或将文件拖拽到此处') {
+        $model = $this->model;
         $value = old($name);
         if ($model) {
             $value = old($name, $model->$name);
@@ -206,8 +217,8 @@ class LayuiHtmlBuilder {
         return view('layui::upload-imgs')->with($render);
     }
 
-    public function uploadImgsDepends($name, $model = null) {
-
+    public function uploadImgsDepends($name) {
+        $model = $this->model;
         $value = old($name);
         if ($model) {
             $value = old($name, $model->$name);
@@ -224,15 +235,27 @@ class LayuiHtmlBuilder {
         return view('layui::upload-imgs')->with($render);
     }
 
-    public function uploadOneImg($name, $model = null, $tips = null, $placeholder = '点击上传，或将文件拖拽到此处') {
+    public function uploadImg($name, $title, $tips = null, $placeholder = '点击上传，或将文件拖拽到此处') {
+        $model = $this->model;
+        $this->uploadImgJS($name);
+        return view('layui::upload-img', [
+            'title'       => $title,
+            'name'        => $name,
+            'model'       => $model,
+            'tips'        => $tips,
+            'placeholder' => $placeholder,
+        ]);
+    }
 
+    public function uploadImgInline($name, $tips = null, $placeholder = '点击上传，或将文件拖拽到此处') {
+        $model = $this->model;
         $value = old($name);
         if ($model) {
             $value = old($name, $model->$name);
         }
 
         $render = [
-            'class'       => 'upload-single-img',
+            'class'       => 'upload-img-inline',
             'js'          => false,
             'name'        => $name,
             'id'          => uniqid(),
@@ -241,28 +264,32 @@ class LayuiHtmlBuilder {
             'placeholder' => $placeholder,
         ];
 
-        return view('layui::upload-single-img')->with($render);
+        $this->uploadImgJS($name);
+
+        return view('layui::upload-img-inline')->with($render);
     }
 
-    public function uploadOneImgJS($name, $model = null) {
+    private function uploadImgJS($name) {
 
+        $model = $this->model;
         $value = old($name);
         if ($model) {
             $value = old($name, $model->$name);
         }
 
         $render = [
-            'class' => 'upload-single-img',
+            'class' => 'upload-img-inline',
             'js'    => true,
             'name'  => $name,
             'id'    => uniqid(),
             'value' => $value,
         ];
 
-        return view('layui::upload-single-img')->with($render);
+        $this->registerJS(__METHOD__, view('layui::upload-img-inline')->with($render));
     }
 
-    public function textarea($name, $label, $model = null, $required = false, $size = [600, 120], $placeholder = null) {
+    public function textarea($name, $label, $required = false, $size = [600, 120], $placeholder = null) {
+        $model = $this->model;
         $value = old($name);
         if ($model) {
             $value = old($name, $model->$name);
@@ -297,24 +324,91 @@ class LayuiHtmlBuilder {
         ]);
     }
 
-    public function ueditorJS() {
-        return view('layui::ueditor', [
-            "js" => true,
+    private function datetimeJS() {
+        $render = [
+            'class' => 'fn-datetime',
+            'js'    => true,
+        ];
+
+        $this->registerJS(__METHOD__, view('layui::datetime-inline')->with($render));
+    }
+
+    public function datetime($name, $label, $required = false) {
+        $model = $this->model;
+        $value = old($name);
+        if ($model) {
+            $value = old($name, $model->$name);
+        }
+
+        $options = [
+            'class' => 'fn-datetime layui-input',
+            'id'    => "xx",
+            "readonly" => 'readonly'
+        ];
+
+        $this->datetimeJS();
+
+        return view('layui::datetime', [
+            "js"       => false,
+            'type'     => "text",
+            'name'     => $name,
+            'required' => $required,
+            'label'    => $label,
+            'value'    => $value,
+            'options'  => $options,
         ]);
     }
 
-    public function ueditor($name, $label, $model = null, $required = false, $height = 350) {
+    public function datetimeInline($name, $label, $required = false) {
+
+        $model = $this->model;
+        $value = old($name);
+        if ($model) {
+            $value = old($name, $model->$name);
+        }
+
+        $options = [
+            'class'    => 'fn-datetime layui-input',
+            'id'       => "xx",
+            "readonly" => 'readonly',
+        ];
+
+        $this->registerJS(__METHOD__, view('layui::datetime-inline', [
+            "js" => true,
+        ]));
+
+        return view('layui::datetime-inline', [
+            "js"       => false,
+            'type'     => "text",
+            'name'     => $name,
+            'required' => $required,
+            'label'    => $label,
+            'value'    => $value,
+            'options'  => $options,
+        ]);
+    }
+
+    public function ueditorInline($name, $label, $required = false, $height = 350) {
+        return $this->ueditor($name, $label, $required, $height, true);
+    }
+
+    public function ueditor($name, $label, $required = false, $height = 350, $inline = false) {
+        $model = $this->model;
         $value = old($name);
         if ($model) {
             $value = old($name, $model->$name);
         }
 
         $placeholder = "请输入" . $label;
+        $width = "99%";
+        if ($inline) {
+            $width = "100%";
+        }
 
         $options = [
             'class'       => 'ueditor',
             'placeholder' => $placeholder,
-            'style'       => "height: {$height}px;width:99%",
+            'style'       => "height: {$height}px;width:" . $width,
             'id'          => uniqid(),
             'data-height' => $height,
         ];
@@ -325,6 +419,10 @@ class LayuiHtmlBuilder {
             $options['lay-verify'] = 'content';
         }
 
+        $this->registerJS(__METHOD__, view('layui::ueditor', [
+            "js" => true,
+        ]));
+
         return view('layui::ueditor', [
             "js"       => false,
             'name'     => $name,
@@ -332,10 +430,12 @@ class LayuiHtmlBuilder {
             'label'    => $label,
             'value'    => $value,
             'options'  => $options,
+            'inline'   => $inline,
         ]);
     }
 
-    public function yesOrNoCheckbox($name, $title, $value, $model = null, $options = []) {
+    public function yesOrNoCheckbox($name, $title, $value, $options = []) {
+        $model = $this->model;
         $no = 0;
         $yes = 1;
         if (is_array($value)) {
@@ -351,7 +451,7 @@ class LayuiHtmlBuilder {
         }
 
 
-        return $this->checkbox($name, $yes, $title, $model, false, $options, $no);
+        return $this->checkbox($name, $yes, $title, false, $options, $no);
     }
 
     public function img($img) {
@@ -365,8 +465,8 @@ class LayuiHtmlBuilder {
 EOL;
     }
 
-    public function checkboxInline($name, $value, $title, $model = null, $required = false, $options = [], $noValue = 0) {
-
+    public function checkboxInline($name, $value, $title, $required = false, $options = [], $noValue = 0) {
+        $model = $this->model;
         $options = $this->mergeAttributes($options, [
             'lay-skin' => 'primary',
             'title'    => $title,
@@ -394,8 +494,8 @@ EOL;
         ]);
     }
 
-    public function checkbox($name, $value, $title, $model = null, $required = false, $options = [], $noValue = 0) {
-
+    public function checkbox($name, $value, $title, $required = false, $options = [], $noValue = 0) {
+        $model = $this->model;
         $options = $this->mergeAttributes($options, [
             'lay-skin' => 'primary',
             'title'    => $title,
@@ -403,7 +503,6 @@ EOL;
 
         $checkedValue = old($name);
         if ($model) {
-//            dump($name,$model->$name);
             $checkedValue = old($name, $model->$name);
         }
 
@@ -466,8 +565,8 @@ EOL;
         return app('html')->link($url, $content, $options, null, false);
     }
 
-    public function readonly($name, $label, $model = null, $required = false, $inputSize = 'input-xx') {
-
+    public function readonly($name, $label, $required = false, $inputSize = 'input-xx') {
+        $model = $this->model;
         $value = old($name);
         if ($model) {
             $value = old($name, $model->$name);
@@ -496,11 +595,44 @@ EOL;
         ]);
     }
 
-    public function inputNumber($name, $label, $model = null, $required = false, $inputSize = 'input-xxx') {
-        return $this->input($name, $label, $model, $required, $inputSize, 'number');
+    public function inputNumber($name, $label, $required = false, $inputSize = 'input-xxx') {
+        return $this->input($name, $label, $required, $inputSize, 'number');
     }
 
-    public function input($name, $label, $model = null, $required = false, $inputSize = 'input-xxx', $type = 'text') {
+    public function inputInline($name, $placeholder, $type = 'text') {
+        $model = $this->model;
+        if (!$name) {
+            $name = $this->name;
+        }
+
+        $value = old($name);
+        if ($model) {
+            $value = old($name, $model->$name);
+        }
+
+        $options = [
+            'class'       => 'layui-input',
+            'placeholder' => $placeholder,
+        ];
+
+        return view('layui::input-inline', [
+            'type'    => $type,
+            'name'    => $name,
+            'value'   => $value,
+            'options' => $options,
+        ]);
+    }
+
+    public function input($name, $label, $required = false, $inputSize = 'input-xxx', $type = 'text') {
+        $model = $this->model;
+        if (!$name) {
+            $name = $this->name;
+        }
+
+        if (!$label) {
+            $label = $this->label;
+        }
+
         $value = old($name);
         if ($model) {
             $value = old($name, $model->$name);
@@ -542,7 +674,7 @@ HTML;
 
     public function fieldsetBegin($title) {
         return <<<EOL
-<fieldset class="layui-elem-field"><legend class="f14" style="color: #222; font-weight:bold;">{$title}</legend><div class="layui-field-box">
+<fieldset class="layui-elem-field"><legend style="color: #222;font-size: 12px;">{$title}</legend><div class="layui-field-box">
 EOL;
     }
 
@@ -584,36 +716,36 @@ EOL;
         return $this->icon('&#xe654;');
     }
 
-    public function sbigInput($name, $label, $model = null, $required = false) {
-        return $this->input($name, $label, $model, $required, 'input-big');
+    public function sbigInput($name, $label, $required = false) {
+        return $this->input($name, $label, $required, 'input-big');
     }
 
-    public function bigInput($name, $label, $model = null, $required = false) {
-        return $this->input($name, $label, $model, $required, 'input-xxxx');
+    public function bigInput($name, $label, $required = false) {
+        return $this->input($name, $label, $required, 'input-xxxx');
     }
 
-    public function miniInput($name, $label, $model = null, $required = false) {
-        return $this->input($name, $label, $model, $required, '');
+    public function miniInput($name, $label, $required = false) {
+        return $this->input($name, $label, $required, '');
     }
 
-    public function miniNumberInput($name, $label, $model = null, $required = false) {
-        return $this->inputNumber($name, $label, $model, $required, '');
+    public function miniNumberInput($name, $label, $required = false) {
+        return $this->inputNumber($name, $label, $required, '');
     }
 
-    public function sInput($name, $label, $model = null, $required = false) {
-        return $this->input($name, $label, $model, $required, 'input-s');
+    public function sInput($name, $label, $required = false) {
+        return $this->input($name, $label, $required, 'input-s');
     }
 
-    public function ssInput($name, $label, $model = null, $required = false) {
-        return $this->input($name, $label, $model, $required, 'input-ss');
+    public function ssInput($name, $label, $required = false) {
+        return $this->input($name, $label, $required, 'input-ss');
     }
 
-    public function sssInput($name, $label, $model = null, $required = false) {
-        return $this->input($name, $label, $model, $required, 'input-sss');
+    public function sssInput($name, $label, $required = false) {
+        return $this->input($name, $label, $required, 'input-sss');
     }
 
-    public function smallInput($name, $label, $model = null, $required = false) {
-        return $this->input($name, $label, $model, $required, 'input-xx');
+    public function smallInput($name, $label, $required = false) {
+        return $this->input($name, $label, $required, 'input-xx');
     }
 
     public function bigPassword($name, $label, $required = false) {
@@ -638,6 +770,10 @@ EOL;
         }
 
         return $attributes;
+    }
+
+    private function registerJS($method, $js) {
+        $this->jsSet[md5(__CLASS__ . $method)] = $js;
     }
 
 }
