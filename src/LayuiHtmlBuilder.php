@@ -333,6 +333,28 @@ class LayuiHtmlBuilder {
         $this->registerJS(__METHOD__, view('layui::datetime')->with($render));
     }
 
+    public function datetimeInline($name, $required = false) {
+        $model = $this->model;
+        $value = old($name);
+        if ($model) {
+            $value = old($name, $model->$name);
+        }
+        $options = [
+            'class' => 'fn-datetime layui-input',
+            'id'    => "xx",
+            "readonly" => 'readonly'
+        ];
+        $this->datetimeJS();
+        return view('layui::datetime-inline', [
+            "js"       => false,
+            'type'     => "text",
+            'name'     => $name,
+            'required' => $required,
+            'value'    => $value,
+            'options'  => $options,
+        ]);
+    }
+
     public function datetime($name, $label, $required = false) {
         $model = $this->model;
         $value = old($name);
