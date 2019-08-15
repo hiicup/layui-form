@@ -65,20 +65,21 @@ class LayuiHtmlBuilder {
         ]);
     }
 
-    public function selectXXL($name, $list, $label = '', $selected = null, $required = false) {
-        return $this->select($name, $list, $label, $selected, $required, 280);
+    public function selectXXL($name, $list, $label = '', $selected = null, $required = false,$filter = '') {
+        return $this->select($name, $list, $label, $selected, $required, 280,$filter);
     }
 
-    public function selectXL($name, $list, $label = '', $selected = null, $required = false) {
-        return $this->select($name, $list, $label, $selected, $required, 220);
+    public function selectXL($name, $list, $label = '', $selected = null, $required = false,$filter = '') {
+        return $this->select($name, $list, $label, $selected, $required, 220,$filter);
     }
 
-    public function select($name, $list, $label = '', $selected = null, $required = false, $width = 190) {
+    public function select($name, $list, $label = '', $selected = null, $required = false, $width = 190,$filter = '') {
         $options = [];
 
         if ($required) {
             $options['lay-verify'] = "required";
         }
+        $options['lay-filter'] = $filter;
 
         $style = "width:{$width}px;";
 
@@ -637,6 +638,7 @@ EOL;
         }
 
         $options = [
+            'id'=>$name,
             'class'       => 'layui-input',
             'placeholder' => $placeholder,
         ];
